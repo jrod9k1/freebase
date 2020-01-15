@@ -1,7 +1,6 @@
 package main
 
 import (
-    //"fmt"
     "log"
     "flag"
     "sync"
@@ -14,8 +13,6 @@ var cache = make([]byte, 1400)
 var cache_len int
 var cache_mu sync.RWMutex // RW mutex here as we don't want readers stepping on each others toes but also don't want collisions during cache write c_c
 
-var raw_conn net.PacketConn
-
 func main() {
     source_ip := flag.String("ip", "", "IP of source server")
     source_port := flag.Int("port", 0, "Port of source server")
@@ -27,12 +24,6 @@ func main() {
     log.Print("Params: source_ip:", *source_ip, " source_port:", *source_port, " bind_port:", *bind_port, " refresh_time:", *refresh_time)
 
     // TODO: Some validation / sanity checking of passed values?
-
-    var err error
-    raw_conn, err = open("eth0")
-    if err != nil {
-        log.Fatal(err)
-    }
 
     var wg sync.WaitGroup
     wg.Add(2)
@@ -133,39 +124,6 @@ func query_server(address string, port int, timeout int) ([]byte, int, error) {
     return reply, n, nil
 }
 
-// aye bruh pass the pointer
-/*
-func send_cache(pc net.PacketConn, addr net.Addr, pkt []byte, n int, source_ip string, source_port int) {
-    log.Print("REMOVE ME sending pkt back to ", addr)
-
-    source := &net.UDPAddr { // TODO: fix this garbage
-        //IP: net.ParseIP(source_ip),
-        //IP: net.ParseIP("142.202.137.10"),
-        IP: net.ParseIP("142.202.137.10"),
-        //Port: source_port,
-        Port: 27016,
-        //Port: 27016,
-    }
-    log.Print("YEET IP ", source_ip)
-    log.Print("YEET PORT ", strconv.Itoa(source_port))
-
-    dest := addr.(*net.UDPAddr)
-
-    // TODO: RWLock here
-    //cache_mu.RLock()
-    b, err := buildUDPPacket(dest, source, cache[:cache_len])
-    //cache_mu.RUnlock()
-    if err != nil {
-        log.Print("Failed building raw UDP packet")
-    }
-
-    _, err = raw_conn.WriteTo(b, &net.IPAddr{IP: dest.IP})
-    if err != nil {
-        log.Print("Failed sending cache to ", addr)
-    }
-}
-*/
-
 func send_cache(pc net.PacketConn, addr net.Addr, pkt []byte, n int, source_ip string, source_port int) {
     log.Print("REMOVE ME sending pkt back to ", addr)
 
@@ -174,7 +132,9 @@ func send_cache(pc net.PacketConn, addr net.Addr, pkt []byte, n int, source_ip s
         log.Fatal(err)
     }
 
+    cache_mu.RLock()
     n, err = pc.WriteTo(cache[:cache_len], addr)
+    cache_mu.RUnlock()
     if err != nil{
         log.Fatal(err)
     }
