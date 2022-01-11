@@ -1,5 +1,5 @@
 # Freebase
-A sensible A2S_INFO cache agent written in Go.
+A sensible albeit primitive A2S_INFO cache service written in Go. Proof of concept for A2S experimentation in gmod / source engine games.
 
 ### Usage
 
@@ -8,6 +8,8 @@ This agent is intended to be run on a BGP Anycast network directly on the edge r
 See this rule as an example of a correct DNAT/REDIRECT setup:
 
 `iptables -t nat -I PREROUTING -p udp -d 142.202.137.10 --dport 27015 -m string --algo bm --hex-string '|ffffffff54536f7572636520456e67696e6520517565727900|' -j REDIRECT --to-port 27016`
+
+This has been tested running directly on Quagga edge routers out of AS137909.
 
 ### Arguments
 
